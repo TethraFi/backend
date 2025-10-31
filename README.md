@@ -4,13 +4,14 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
 ![Express](https://img.shields.io/badge/Express-4.x-lightgrey)
 
-Comprehensive backend service for Tethra DEX providing:
-- 📊 **Real-time Price Feeds** (Pyth Network Oracle)
+Backend service for Tethra DEX supporting **Flow EVM Testnet** and **Base Sepolia**, providing:
+- 📊 **Real-time Price Feeds** from Pyth Network Oracle
 - ✍️ **Price Signing** for on-chain verification
 - 🚀 **Relay Service** for gasless transactions
-- 🤖 **Automated Order Execution** (Limit orders, Grid trading, TP/SL)
+- 🤖 **Automated Order Execution** (Limit orders, TP/SL)
 - 📊 **Position Monitoring** with auto-liquidation
 - 🎲 **One Tap Profit** betting settlement
+- 🌐 **Multi-Chain Support** for Flow & Base
 
 ## 🌟 Key Features
 
@@ -35,10 +36,78 @@ Comprehensive backend service for Tethra DEX providing:
 - ✅ **WebSocket Server** - Real-time updates for prices and positions
 - ✅ **TypeScript** - Type-safe development with full type coverage
 
+## 🌐 Supported Networks
+
+This backend supports both chains with deployed smart contracts:
+
+### Flow EVM Testnet
+- **RPC URL**: `https://testnet.evm.nodes.onflow.org`
+- **Chain ID**: 545
+- All contract addresses available in `.env`
+
+### Base Sepolia
+- **RPC URL**: `https://sepolia.base.org`
+- **Chain ID**: 84532
+- All contract addresses available in `.env`
+
+## 📦 Deployed Smart Contracts
+
+### Flow EVM Testnet Addresses
+
+```env
+# Tokens
+FLOW_USDC_ADDRESS=0x2c6887Fa522B551992974b68ffB1660f6d2F8340
+FLOW_TETHRA_TOKEN_ADDRESS=0xff9EEdD3Ca844794fb9934D4Fa56dE5Ca89c6fbA
+
+# Core Trading
+FLOW_RISK_MANAGER_ADDRESS=0xc04B2294D30D6e077B1736d84A11DFe6f68e9745
+FLOW_POSITION_MANAGER_ADDRESS=0x29Bc61d98d9BD0298C010D59A5C2e5a2CB5D8958
+FLOW_TREASURY_MANAGER_ADDRESS=0xADbb3D9eE68d701e61bA49DDe3fa85e4864c00e9
+FLOW_MARKET_EXECUTOR_ADDRESS=0x5f6fe2dee3A77F255057A4210958784B60A9C66D
+
+# Advanced Trading
+FLOW_LIMIT_EXECUTOR_ADDRESS=0x9782F89bDB822059FeaC76425b10f81A1E2d5d3f
+FLOW_TAP_TO_TRADE_EXECUTOR_ADDRESS=0xD59551d80BDfe94662ACed1d27b5b12792711072
+FLOW_ONE_TAP_PROFIT_ADDRESS=0x42C53C1769779277B74bD89b3e6994E88d33E285
+
+# Staking & Incentives
+FLOW_TETHRA_STAKING_ADDRESS=0x3c30c160406fd840A571B65fD475A91F960B730E
+FLOW_LIQUIDITY_MINING_ADDRESS=0xE9de7BF710B98D465BB90a92599F40431b0D3Bf8
+
+# Infrastructure
+FLOW_USDC_PAYMASTER_ADDRESS=0x3aB9B3DD9D96F063902A8FE12Ed1401e26c5D533
+```
+
+### Base Sepolia Addresses
+
+```env
+# Tokens
+BASE_USDC_ADDRESS=0x9d660c5d4BFE4b7fcC76f327b22ABF7773DD48c1
+BASE_TETHRA_TOKEN_ADDRESS=0x6f1330f207Ab5e2a52c550AF308bA28e3c517311
+
+# Core Trading
+BASE_RISK_MANAGER_ADDRESS=0x08A23503CC221C3B520D2E9bA2aB93E3546d798F
+BASE_POSITION_MANAGER_ADDRESS=0x8eA6059Bd95a9f0A47Ce361130ffB007415519aF
+BASE_TREASURY_MANAGER_ADDRESS=0x157e68fBDD7D8294badeD37d876aEb7765986681
+BASE_MARKET_EXECUTOR_ADDRESS=0xA1badd2cea74931d668B7aB99015ede28735B3EF
+
+# Advanced Trading
+BASE_LIMIT_EXECUTOR_ADDRESS=0x8c297677FEA6F0beDC0D1fa139aa2bc23eE6234a
+BASE_TAP_TO_TRADE_EXECUTOR_ADDRESS=0x79Cb84cF317235EA5C61Cce662373D982853E8d8
+BASE_ONE_TAP_PROFIT_ADDRESS=0x5D4c52a7aD4Fb6B43C6B212Db1C1e0A7f9B0f73c
+
+# Staking & Incentives
+BASE_TETHRA_STAKING_ADDRESS=0x69FFE0989234971eA2bc542c84c9861b0D8F9b17
+BASE_LIQUIDITY_MINING_ADDRESS=0x76dc221f50ca56A1E8445508CA9ecc0aD57d0B11
+
+# Infrastructure
+BASE_USDC_PAYMASTER_ADDRESS=0x94FbB9C6C854599c7562c282eADa4889115CCd8E
+```
+
 ## 📋 Prerequisites
 
 - Node.js >= 18.x
-- npm atau yarn
+- npm or yarn
 
 ## 🚀 Installation
 
