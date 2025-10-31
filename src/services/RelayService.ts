@@ -40,15 +40,16 @@ export class RelayService {
     }
     this.relayWallet = new ethers.Wallet(RELAY_PRIVATE_KEY, this.provider);
     
-    // Contract addresses
-    this.PAYMASTER_ADDRESS = process.env.USDC_PAYMASTER_ADDRESS || '';
-    this.MARKET_EXECUTOR_ADDRESS = process.env.MARKET_EXECUTOR_ADDRESS || '';
-    this.LIMIT_EXECUTOR_ADDRESS = process.env.LIMIT_EXECUTOR_ADDRESS || '';
-    this.POSITION_MANAGER_ADDRESS = process.env.POSITION_MANAGER_ADDRESS || '';
-    this.TREASURY_MANAGER_ADDRESS = process.env.TREASURY_MANAGER_ADDRESS || '';
+    // Contract addresses - Use BASE chain config as default
+    const baseConfig = getChainConfig('base');
+    this.PAYMASTER_ADDRESS = baseConfig.contracts.usdcPaymaster;
+    this.MARKET_EXECUTOR_ADDRESS = baseConfig.contracts.marketExecutor;
+    this.LIMIT_EXECUTOR_ADDRESS = baseConfig.contracts.limitExecutorV2;
+    this.POSITION_MANAGER_ADDRESS = baseConfig.contracts.positionManager;
+    this.TREASURY_MANAGER_ADDRESS = baseConfig.contracts.treasuryManager;
     
     if (!this.PAYMASTER_ADDRESS || !this.MARKET_EXECUTOR_ADDRESS || !this.LIMIT_EXECUTOR_ADDRESS || !this.POSITION_MANAGER_ADDRESS || !this.TREASURY_MANAGER_ADDRESS) {
-      throw new Error('Contract addresses not configured');
+      throw new Error('Contract addresses not configured in chains.ts');
     }
     
     // Initialize paymaster contract

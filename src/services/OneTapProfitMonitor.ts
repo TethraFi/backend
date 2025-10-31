@@ -3,6 +3,7 @@ import { Logger } from '../utils/Logger';
 import { PythPriceService } from './PythPriceService';
 import { OneTapProfitService } from './OneTapProfitService';
 import { OneTapBetStatus } from '../types/oneTapProfit';
+import { getChainConfig } from '../config/chains';
 
 const OneTapProfitABI = [
   'function settleBet(uint256 betId, uint256 currentPrice, uint256 currentTime, bool won) external',
@@ -39,9 +40,11 @@ export class OneTapProfitMonitor {
     this.priceService = priceService;
     this.oneTapService = oneTapService;
     
+    // Get Base chain configuration (monitor uses Base by default)
+    const baseConfig = getChainConfig('base');
+    
     // Setup relayer
-    const rpcUrl = process.env.RPC_URL || 'https://sepolia.base.org';
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const provider = new ethers.JsonRpcProvider(baseConfig.rpcUrl);
     
     const relayPrivateKey = process.env.RELAY_PRIVATE_KEY;
     if (!relayPrivateKey) {
@@ -49,10 +52,10 @@ export class OneTapProfitMonitor {
     }
     this.relayer = new ethers.Wallet(relayPrivateKey, provider);
     
-    // Setup contract
-    const contractAddress = process.env.ONE_TAP_PROFIT_ADDRESS;
+    // Setup contract from chain config
+    const contractAddress = baseConfig.contracts.oneTapProfit;
     if (!contractAddress) {
-      throw new Error('ONE_TAP_PROFIT_ADDRESS not set in environment');
+      throw new Error('ONE_TAP_PROFIT_ADDRESS not configured in chains.ts');
     }
     
     this.contract = new ethers.Contract(contractAddress, OneTapProfitABI, this.relayer);

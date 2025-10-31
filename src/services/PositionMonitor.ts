@@ -10,6 +10,7 @@ import { Logger } from '../utils/Logger';
 import PositionManagerABI from '../abis/PositionManager.json';
 import MarketExecutorABI from '../abis/MarketExecutor.json';
 import RiskManagerABI from '../abis/RiskManager.json';
+import { getChainConfig } from '../config/chains';
 
 interface Position {
   id: bigint;
@@ -39,9 +40,11 @@ export class PositionMonitor {
   constructor(pythPriceService: any) {
     this.logger = new Logger('PositionMonitor');
 
+    // Get Base chain configuration
+    const baseConfig = getChainConfig('base');
+    
     // Initialize provider
-    const RPC_URL = process.env.RPC_URL || 'https://sepolia.base.org';
-    this.provider = new ethers.JsonRpcProvider(RPC_URL);
+    this.provider = new ethers.JsonRpcProvider(baseConfig.rpcUrl);
 
     // Keeper wallet
     const keeperPrivateKey = process.env.RELAY_PRIVATE_KEY;
@@ -57,13 +60,13 @@ export class PositionMonitor {
     }
     this.priceSignerWallet = new ethers.Wallet(priceSignerKey);
 
-    // Contract addresses
-    const positionManagerAddress = process.env.POSITION_MANAGER_ADDRESS || '';
-    const marketExecutorAddress = process.env.MARKET_EXECUTOR_ADDRESS || '';
-    const riskManagerAddress = process.env.RISK_MANAGER_ADDRESS || '';
+    // Contract addresses from chain config
+    const positionManagerAddress = baseConfig.contracts.positionManager;
+    const marketExecutorAddress = baseConfig.contracts.marketExecutor;
+    const riskManagerAddress = baseConfig.contracts.riskManager;
 
     if (!positionManagerAddress || !marketExecutorAddress || !riskManagerAddress) {
-      throw new Error('Contract addresses not configured');
+      throw new Error('Contract addresses not configured in chains.ts');
     }
 
     // Initialize contracts

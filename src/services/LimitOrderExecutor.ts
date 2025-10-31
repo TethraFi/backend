@@ -13,6 +13,7 @@ import { Logger } from '../utils/Logger';
 import LimitExecutorABI from '../abis/LimitExecutorV2.json';
 import { GridTradingService } from './GridTradingService';
 import { GridCell, GridCellStatus } from '../types/gridTrading';
+import { getChainConfig } from '../config/chains';
 
 interface PendingOrder {
   id: bigint;
@@ -56,9 +57,11 @@ export class LimitOrderExecutor {
     this.limitOrderService = limitOrderService;
     this.logger = new Logger('LimitOrderExecutor');
 
+    // Get Base chain configuration
+    const baseConfig = getChainConfig('base');
+    
     // Initialize provider
-    const RPC_URL = process.env.RPC_URL || 'https://sepolia.base.org';
-    this.provider = new ethers.JsonRpcProvider(RPC_URL);
+    this.provider = new ethers.JsonRpcProvider(baseConfig.rpcUrl);
 
     // Keeper wallet (executes orders)
     const keeperPrivateKey = process.env.RELAY_PRIVATE_KEY;
@@ -76,9 +79,9 @@ export class LimitOrderExecutor {
     this.priceSignerAddress = this.priceSignerWallet.address;
 
     // LimitExecutor contract
-    this.limitExecutorAddress = process.env.LIMIT_EXECUTOR_ADDRESS || '';
+    this.limitExecutorAddress = baseConfig.contracts.limitExecutorV2;
     if (!this.limitExecutorAddress) {
-      throw new Error('LIMIT_EXECUTOR_ADDRESS not configured');
+      throw new Error('LIMIT_EXECUTOR_ADDRESS not configured in chains.ts');
     }
 
     this.limitExecutor = new Contract(
@@ -88,9 +91,9 @@ export class LimitOrderExecutor {
     );
 
     // PositionManager address for querying position IDs
-    this.tradingPairAddress = process.env.POSITION_MANAGER_ADDRESS || '';
+    this.tradingPairAddress = baseConfig.contracts.positionManager;
     if (!this.tradingPairAddress) {
-      throw new Error('POSITION_MANAGER_ADDRESS not configured');
+      throw new Error('POSITION_MANAGER_ADDRESS not configured in chains.ts');
     }
 
     // Subscribe to Pyth price updates
