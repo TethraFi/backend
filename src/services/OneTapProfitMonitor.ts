@@ -267,6 +267,8 @@ export class OneTapProfitMonitor {
         if (!settlement) break;
         
         try {
+          this.logger.info(`🔄 Starting settlement for bet ${settlement.betId}...`);
+          
           await this.settleBet(
             settlement.betId,
             settlement.currentPrice,
@@ -278,15 +280,25 @@ export class OneTapProfitMonitor {
           this.priceHistory.delete(settlement.betId);
           this.queuedBets.delete(settlement.betId);
           
+          this.logger.success(`✅ Settlement completed for bet ${settlement.betId}`);
+          
           // Small delay between settlements to ensure nonce increments
           await new Promise(resolve => setTimeout(resolve, 2000));
         } catch (error: any) {
-          this.logger.error(`Failed to settle bet ${settlement.betId}:`, error);
+          // Log detailed error info
+          this.logger.error(`❌ Failed to settle bet ${settlement.betId}:`);
+          this.logger.error(`   Error name: ${error.name}`);
+          this.logger.error(`   Error message: ${error.message}`);
+          if (error.code) this.logger.error(`   Error code: ${error.code}`);
+          if (error.reason) this.logger.error(`   Error reason: ${error.reason}`);
+          if (error.transaction) {
+            this.logger.error(`   Transaction data: ${JSON.stringify(error.transaction)}`);
+          }
           
           // Settlement FAILED - remove from queue so it won't spam logs
           // But keep in queuedBets to prevent re-adding to queue
           // Bet will stay ACTIVE in memory until manually fixed
-          this.logger.warn(`Bet ${settlement.betId} remains ACTIVE - please fix settler role and restart`);
+          this.logger.warn(`⚠️ Bet ${settlement.betId} remains ACTIVE - please check logs above`);
         }
       }
     } finally {
@@ -308,6 +320,12 @@ export class OneTapProfitMonitor {
 
       // Settle bet through service with correct chain
       const chain = bet.chain || 'base'; // Default to base if chain not specified
+      
+      this.logger.info(`📤 Calling settleBet on ${chain.toUpperCase()} chain...`);
+      this.logger.info(`   Bet ID: ${betId}`);
+      this.logger.info(`   Result: ${won ? 'WON' : 'LOST'}`);
+      this.logger.info(`   Price: $${currentPrice}`);
+      
       await this.oneTapService.settleBet(betId, currentPrice, currentTime, won, chain);
     } catch (error: any) {
       this.logger.error(`Failed to settle bet ${betId}:`, error);

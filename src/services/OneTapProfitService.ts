@@ -517,6 +517,24 @@ export class OneTapProfitService {
       }
 
       this.logger.info(`🔄 Settling bet ${betId} on ${chain}... (${won ? 'WON' : 'LOST'})`);
+      
+      // Check relayer wallet balance before settlement
+      const { wallet, contractAddress } = this.getChainConfig(chain);
+      try {
+        const balance = await wallet.provider.getBalance(wallet.address);
+        const balanceInEth = ethers.formatEther(balance);
+        this.logger.info(`💰 Relayer balance on ${chain}: ${balanceInEth} ETH/FLOW`);
+        
+        if (balance === 0n) {
+          throw new Error(`Relayer wallet has ZERO balance on ${chain}! Cannot send transaction.`);
+        }
+        
+        if (parseFloat(balanceInEth) < 0.001) {
+          this.logger.warn(`⚠️ Low relayer balance on ${chain}: ${balanceInEth} ETH/FLOW`);
+        }
+      } catch (balanceError: any) {
+        this.logger.error(`Failed to check relayer balance on ${chain}:`, balanceError.message);
+      }
 
       // Optimistically update status in memory BEFORE on-chain settlement for faster UI updates
       const betToUpdate = this.bets.get(compositeKey);
@@ -530,6 +548,9 @@ export class OneTapProfitService {
       const priceInUnits = ethers.parseUnits(currentPriceFixed, 8);
 
       try {
+        this.logger.info(`📤 Sending settleBet transaction to ${contractAddress}...`);
+        this.logger.info(`   Parameters: betId=${betId}, price=${currentPriceFixed}, time=${currentTime}, won=${won}`);
+        
         // Settle bet on-chain
         const tx = await contract.settleBet(
           betId,
