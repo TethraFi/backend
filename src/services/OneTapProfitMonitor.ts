@@ -20,8 +20,15 @@ export class OneTapProfitMonitor {
   private readonly logger = new Logger('OneTapProfitMonitor');
   private priceService: PythPriceService;
   private oneTapService: OneTapProfitService;
-  private contract: ethers.Contract;
-  private relayer: ethers.Wallet;
+  
+  // Multi-chain support
+  private baseProvider: ethers.JsonRpcProvider;
+  private flowProvider: ethers.JsonRpcProvider;
+  private baseWallet: ethers.Wallet;
+  private flowWallet: ethers.Wallet;
+  private baseContract: ethers.Contract;
+  private flowContract: ethers.Contract;
+  
   private intervalId?: NodeJS.Timeout;
   private isRunning = false;
   
@@ -40,27 +47,40 @@ export class OneTapProfitMonitor {
     this.priceService = priceService;
     this.oneTapService = oneTapService;
     
-    // Get Base chain configuration (monitor uses Base by default)
-    const baseConfig = getChainConfig('base');
-    
-    // Setup relayer
-    const provider = new ethers.JsonRpcProvider(baseConfig.rpcUrl);
-    
     const relayPrivateKey = process.env.RELAY_PRIVATE_KEY;
     if (!relayPrivateKey) {
       throw new Error('RELAY_PRIVATE_KEY not set in environment');
     }
-    this.relayer = new ethers.Wallet(relayPrivateKey, provider);
     
-    // Setup contract from chain config
-    const contractAddress = baseConfig.contracts.oneTapProfit;
-    if (!contractAddress) {
-      throw new Error('ONE_TAP_PROFIT_ADDRESS not configured in chains.ts');
+    // Setup Base chain
+    const baseConfig = getChainConfig('base');
+    this.baseProvider = new ethers.JsonRpcProvider(baseConfig.rpcUrl);
+    this.baseWallet = new ethers.Wallet(relayPrivateKey, this.baseProvider);
+    if (!baseConfig.contracts.oneTapProfit) {
+      throw new Error('Base ONE_TAP_PROFIT_ADDRESS not configured in chains.ts');
     }
+    this.baseContract = new ethers.Contract(
+      baseConfig.contracts.oneTapProfit,
+      OneTapProfitABI,
+      this.baseWallet
+    );
     
-    this.contract = new ethers.Contract(contractAddress, OneTapProfitABI, this.relayer);
+    // Setup Flow chain
+    const flowConfig = getChainConfig('flow');
+    this.flowProvider = new ethers.JsonRpcProvider(flowConfig.rpcUrl);
+    this.flowWallet = new ethers.Wallet(relayPrivateKey, this.flowProvider);
+    if (!flowConfig.contracts.oneTapProfit) {
+      throw new Error('Flow ONE_TAP_PROFIT_ADDRESS not configured in chains.ts');
+    }
+    this.flowContract = new ethers.Contract(
+      flowConfig.contracts.oneTapProfit,
+      OneTapProfitABI,
+      this.flowWallet
+    );
     
-    this.logger.info('🎯 OneTapProfitMonitor initialized');
+    this.logger.success('🎯 OneTapProfitMonitor initialized (Multi-Chain)');
+    this.logger.info(`   Base: ${baseConfig.contracts.oneTapProfit}`);
+    this.logger.info(`   Flow: ${flowConfig.contracts.oneTapProfit}`);
   }
   
   /**
@@ -184,13 +204,16 @@ export class OneTapProfitMonitor {
           
           // Settle bet if needed (only if not already queued)
           if (shouldSettle && !this.queuedBets.has(bet.betId)) {
-            // Log settlement decision ONCE
+            // Log settlement decision ONCE with chain info
+            const chainName = bet.chain || 'base';
             if (won) {
-              this.logger.success(`🎉 Bet ${bet.betId} WON!`);
+              this.logger.success(`🎉 Bet ${bet.betId} on ${chainName.toUpperCase()} WON!`);
+              this.logger.success(`   Chain: ${chainName}`);
               this.logger.success(`   Price: $${currentPrice.toFixed(2)} in range [$${gridMin.toFixed(2)} - $${gridMax.toFixed(2)}]`);
               this.logger.success(`   Time: ${toGMT7(now)} (valid until ${toGMT7(bet.targetTime)})`);
             } else {
-              this.logger.info(`⏰ Bet ${bet.betId} LOST! Time expired`);
+              this.logger.info(`⏰ Bet ${bet.betId} on ${chainName.toUpperCase()} LOST! Time expired`);
+              this.logger.info(`   Chain: ${chainName}`);
               this.logger.info(`   Final Price: $${currentPrice.toFixed(2)} (needed range: $${gridMin.toFixed(2)} - $${gridMax.toFixed(2)})`);
               this.logger.info(`   Expired at: ${toGMT7(now)} (limit was ${toGMT7(bet.targetTime)})`);
             }
